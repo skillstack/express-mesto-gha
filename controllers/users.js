@@ -2,7 +2,7 @@ const userSchema = require('../models/user');
 const {
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_NOT_FOUND,
-  HTTP_STATUS_INTERNAL_SERVER_ERROR
+  HTTP_STATUS_INTERNAL_SERVER_ERROR,
 } = require('../utils/constants');
 
 module.exports.getUsers = (req, res) => {
@@ -22,7 +22,7 @@ module.exports.getUserById = (req, res) => {
   userSchema.findById(userId)
     .orFail()
     .then((user) => {
-      res.send(user)
+      res.send(user);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -70,7 +70,6 @@ module.exports.updateUser = (req, res) => {
       res.send(user);
     })
     .catch((err) => {
-
       if (err.name === 'CastError' || err.name === 'ValidationError') {
         res.status(HTTP_STATUS_BAD_REQUEST)
           .send({ message: 'Переданы некорректные данные при обновлении пользователя' });
@@ -97,7 +96,6 @@ module.exports.updateUserAvatar = (req, res) => {
       res.send(user);
     })
     .catch((err) => {
-
       if (err.name === 'CastError' || err.name === 'ValidationError') {
         res.status(HTTP_STATUS_BAD_REQUEST)
           .send({ message: 'Переданы некорректные данные при обновлении аватара' });
