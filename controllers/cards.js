@@ -1,5 +1,6 @@
 const cardSchema = require('../models/card');
 const {
+  HTTP_STATUS_CREATED,
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_NOT_FOUND,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -22,7 +23,8 @@ module.exports.createCard = (req, res) => {
 
   cardSchema.create({ name, link, owner })
     .then((card) => {
-      res.send(card);
+      res.status(HTTP_STATUS_CREATED)
+        .send(card);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {

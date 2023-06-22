@@ -1,5 +1,6 @@
 const userSchema = require('../models/user');
 const {
+  HTTP_STATUS_CREATED,
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_NOT_FOUND,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -47,7 +48,8 @@ module.exports.createUser = (req, res) => {
 
   userSchema.create({ name, about, avatar })
     .then((user) => {
-      res.send(user);
+      res.status(HTTP_STATUS_CREATED)
+        .send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
