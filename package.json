@@ -20,13 +20,17 @@
   },
   "homepage": "https://github.com/skillstack/express-mesto-gha",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "celebrate": "^15.0.1",
     "express": "^4.18.2",
-    "mongoose": "^7.3.0"
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^7.3.0",
+    "validator": "^13.9.0"
   },
   "devDependencies": {
     "eslint": "^8.42.0",
-    "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-plugin-import": "^2.27.5",
-    "nodemon": "^2.0.22"
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.26.0",
+    "nodemon": "^1.14.9"
   }
 }

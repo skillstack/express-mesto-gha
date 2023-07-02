@@ -1,23 +1,18 @@
 const cardSchema = require('../models/card');
-const {
-  HTTP_STATUS_CREATED,
-  HTTP_STATUS_BAD_REQUEST,
-  HTTP_STATUS_NOT_FOUND,
-  HTTP_STATUS_INTERNAL_SERVER_ERROR,
-} = require('../utils/constants');
+const BadRequestError = require('../utils/errors/BadRequestError');
+const NotFoundError = require('../utils/errors/NotFoundError');
+const ForbiddenError = require('../utils/errors/ForbiddenError');
+const { HTTP_STATUS_CREATED } = require('../utils/constants');
 
-module.exports.getCards = (req, res) => {
+module.exports.getCards = (req, res, next) => {
   cardSchema.find({})
     .then((cards) => {
       res.send(cards);
     })
-    .catch((err) => {
-      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: err.message });
-    });
+    .catch(next);
 };
 
-module.exports.createCard = (req, res) => {
+module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
   const owner = req.user._id;
 
@@ -28,43 +23,40 @@ module.exports.createCard = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(HTTP_STATUS_BAD_REQUEST)
-          .send({ message: 'Переданы некорректные данные при создании карточки' });
-        return;
+        return next(new BadRequestError('Переданы некорректные данные при создании карточки'));
       }
-
-      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: err.message });
+      return next(err);
     });
 };
 
-module.exports.deleteCard = (req, res) => {
+module.exports.deleteCard = (req, res, next) => {
   const { cardId } = req.params;
+  const user = req.user._id;
 
-  cardSchema.findByIdAndRemove(cardId)
+  cardSchema.findById(cardId)
     .orFail()
     .then((card) => {
-      res.send(card);
+      const owner = card.owner.toString();
+
+      if (owner !== user) {
+        return next(new ForbiddenError('В удалении отказано, вы не являетесь автором карточки'));
+      }
+      return cardSchema.deleteOne(card)
+        .then(() => res.send({ message: 'Карточка удалена' }));
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(HTTP_STATUS_BAD_REQUEST)
-          .send({ message: 'Переданы некорректные данные при удалении карточки' });
-        return;
+        return next(new BadRequestError('Переданы некорректные данные при удалении карточки'));
       }
 
       if (err.name === 'DocumentNotFoundError') {
-        res.status(HTTP_STATUS_NOT_FOUND)
-          .send({ message: `Карточка с указанным id: ${cardId} не найдена` });
-        return;
+        return next(new NotFoundError(`Карточка с указанным id: ${cardId} не найдена`));
       }
-
-      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: err.message });
+      return next(err);
     });
 };
 
-module.exports.addCardLike = (req, res) => {
+module.exports.addCardLike = (req, res, next) => {
   cardSchema
     .findByIdAndUpdate(req.params.cardId, { $addToSet: { likes: req.user._id } }, { new: true })
     .orFail()
@@ -73,23 +65,17 @@ module.exports.addCardLike = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(HTTP_STATUS_BAD_REQUEST)
-          .send({ message: 'Переданы некорректные данные при установке лайка' });
-        return;
+        return next(new BadRequestError('Переданы некорректные данные при установке лайка'));
       }
 
       if (err.name === 'DocumentNotFoundError') {
-        res.status(HTTP_STATUS_NOT_FOUND)
-          .send({ message: `Карточка с указанным id: ${req.params.cardId} не найдена` });
-        return;
+        return next(new NotFoundError(`Карточка с указанным id: ${req.params.cardId} не найдена`));
       }
-
-      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: err.message });
+      return next(err);
     });
 };
 
-module.exports.deleteCardLike = (req, res) => {
+module.exports.deleteCardLike = (req, res, next) => {
   cardSchema
     .findByIdAndUpdate(req.params.cardId, { $pull: { likes: req.user._id } }, { new: true })
     .orFail()
@@ -98,18 +84,12 @@ module.exports.deleteCardLike = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(HTTP_STATUS_BAD_REQUEST)
-          .send({ message: 'Переданы некорректные данные при удалении лайка' });
-        return;
+        return next(new BadRequestError('Переданы некорректные данные при удалении лайка'));
       }
 
       if (err.name === 'DocumentNotFoundError') {
-        res.status(HTTP_STATUS_NOT_FOUND)
-          .send({ message: `Карточка с указанным id: ${req.params.cardId} не найдена` });
-        return;
+        return next(new NotFoundError(`Карточка с указанным id: ${req.params.cardId} не найдена`));
       }
-
-      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: err.message });
+      return next(err);
     });
 };
